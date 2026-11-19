@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Quiz - Level A1</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --danger: #b91c1c;
+      --danger-bg: #fef2f2;
+      --border: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 16px;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      background: var(--card);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--border);
+    }
+
+    h1 { margin: 0 0 6px; font-size: 1.5rem; }
+    .subtitle { color: var(--muted); margin: 0 0 18px; font-size: 0.95rem; }
+
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .timer { color: var(--primary); font-variant-numeric: tabular-nums; }
+    .warnings { color: var(--danger); }
+
+    .field-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    label.field-label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="email"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .question-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 14px;
+      background: #fafafa;
+    }
+
+    .q-meta {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .q-text {
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 6px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+    }
+
+    .option:hover { background: #f0f7ff; }
+    .option input { margin: 0; transform: scale(1.1); }
+
+    .btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .btn:hover { background: var(--primary-hover); }
+    .btn:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    .alert-banner {
+      display: none;
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid #fecaca;
+      padding: 12px 14px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .result-box {
+      display: none;
+      text-align: center;
+      padding: 24px;
+      border-radius: 12px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>English Quiz — Level A1</h1>
+    <p class="subtitle">
+      Completa las 20 preguntas antes de que termine el tiempo. No cambies de pestaña ni minimices la pantalla.
+    </p>
+
+    <div id="warningBanner" class="alert-banner"></div>
+
+    <!-- Pantalla inicial de datos -->
+    <div id="startScreen">
+      <div class="field-group">
+        <div>
+          <label class="field-label" for="studentName">Nombre completo *</label>
+          <input type="text" id="studentName" placeholder="Ej. Ana María Pérez" required />
+        </div>
+        <div>
+          <label class="field-label" for="studentGroup">Grupo / Código *</label>
+          <input type="text" id="studentGroup" placeholder="Ej. ING-101" required />
+        </div>
+      </div>
+      <button type="button" class="btn" id="startBtn">Iniciar examen (25 minutos)</button>
+    </div>
+
+    <!-- Formulario del examen -->
+    <form id="quizForm" class="hidden">
+      <div class="top-bar">
+        <div class="timer" id="timerDisplay">Tiempo restante: 25:00</div>
+        <div class="warnings" id="warningsDisplay">Salidas de pantalla: 0 / 3</div>
+      </div>
+
+      <div id="questionsContainer"></div>
+
+      <button type="submit" class="btn" id="submitBtn">Enviar examen</button>
+    </form>
+
+    <!-- Confirmación final -->
+    <div id="resultBox" class="result-box">
+      <h2>Examen enviado</h2>
+      <p id="statusMessage">Tu registro ha sido guardado correctamente.</p>
+    </div>
+  </div>
+
+  <script>
+    // 1. CONFIGURACIÓN GENERAL
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwhYjNTszBHrKhxBqjn8bLo_B69ceC61vAWB-LK7PNqr3knQwukDZ1CZBy4FLXhrH5QNg/exec";
+    const DURACION_SEGUNDOS = 25 * 60; // 25 minutos
+    const MAX_SALIDAS = 3;
+
+    // 2. BANCO DE 20 PREGUNTAS A1 (1 punto cada una = 20 puntos)
+    const QUESTIONS = [
+      // Parte 1: Like, Want, Need, Have & Simple Present (6 pts)
+      {
+        id: 1,
+        section: "Part 1: Like, Want, Need, Have",
+        q: "Sofia _______ a new English workbook for class.",
+        options: ["have", "has", "having", "to have"],
+        answer: "has"
+      },
+      {
+        id: 2,
+        section: "Part 1: Like, Want, Need, Have",
+        q: "My friends and I _______ coffee in the morning.",
+        options: ["like", "likes", "liking", "is like"],
+        answer: "like"
+      },
+      {
+        id: 3,
+        section: "Part 1: Like, Want, Need, Have",
+        q: "Mateo is very tired; he _______ a short rest.",
+        options: ["need", "needing", "needs", "are need"],
+        answer: "needs"
+      },
+      {
+        id: 4,
+        section: "Part 1: Like, Want, Need, Have",
+        q: "They _______ to visit Cartagena this weekend.",
+        options: ["wants", "want", "wanting", "is want"],
+        answer: "want"
+      },
+      {
+        id: 5,
+        section: "Part 1: Like, Want, Need, Have",
+        q: "Lucas _______ pizza, but he doesn't eat meat.",
+        options: ["like", "liking", "likes", "are like"],
+        answer: "likes"
+      },
+      {
+        id: 6,
+        section: "Part 1: Like, Want, Need, Have",
+        q: "You _______ two brothers and one sister.",
+        options: ["has", "have", "having", "is have"],
+        answer: "have"
+      },
+
+      // Parte 2: Demonstratives - This, That, Those (4 pts)
+      {
+        id: 7,
+        section: "Part 2: This, That, Those",
+        q: "(The phone is right here in my hand.) _______ phone is very fast.",
+        options: ["This", "That", "Those"],
+        answer: "This"
+      },
+      {
+        id: 8,
+        section: "Part 2: This, That, Those",
+        q: "(Two books are over there on the far table.) _______ books are for the library.",
+        options: ["This", "That", "Those"],
+        answer: "Those"
+      },
+      {
+        id: 9,
+        section: "Part 2: This, That, Those",
+        q: "(A single backpack is over there near the door.) _______ backpack is blue.",
+        options: ["This", "That", "Those"],
+        answer: "That"
+      },
+      {
+        id: 10,
+        section: "Part 2: This, That, Those",
+        q: "(One key is right here on my desk.) _______ key is mine.",
+        options: ["This", "That", "Those"],
+        answer: "This"
+      },
+
+      // Parte 3: Be Questions with When and What Day (5 pts)
+      {
+        id: 11,
+        section: "Part 3: When & What Day + Be",
+        q: "— _______ the English exam? — It is on Friday at 9:00 AM.",
+        options: ["When is", "When are", "What day are", "Where is"],
+        answer: "When is"
+      },
+      {
+        id: 12,
+        section: "Part 3: When & What Day + Be",
+        q: "— _______ it today? — Today is Thursday.",
+        options: ["When are", "What day is", "What day are", "When am"],
+        answer: "What day is"
+      },
+      {
+        id: 13,
+        section: "Part 3: When & What Day + Be",
+        q: "— _______ your birthday? — It is in July.",
+        options: ["What day is", "When is", "When are", "What day are"],
+        answer: "When is"
+      },
+      {
+        id: 14,
+        section: "Part 3: When & What Day + Be",
+        q: "— _______ the meeting? — It is on Monday afternoon.",
+        options: ["What day is", "What day are", "When are", "When am"],
+        answer: "What day is"
+      },
+      {
+        id: 15,
+        section: "Part 3: When & What Day + Be",
+        q: "— _______ the concert? — It is tonight at 8:00 PM.",
+        options: ["What day is", "When are", "When is", "What day are"],
+        answer: "When is"
+      },
+
+      // Parte 4: Prepositions In and At with Parts of the Day (5 pts)
+      {
+        id: 16,
+        section: "Part 4: In & At (Parts of the Day)",
+        q: "I check my messages _______ the morning.",
+        options: ["in", "at", "on"],
+        answer: "in"
+      },
+      {
+        id: 17,
+        section: "Part 4: In & At (Parts of the Day)",
+        q: "The train arrives _______ noon.",
+        options: ["in", "at", "on"],
+        answer: "at"
+      },
+      {
+        id: 18,
+        section: "Part 4: In & At (Parts of the Day)",
+        q: "We study together _______ the afternoon.",
+        options: ["in", "at", "on"],
+        answer: "in"
+      },
+      {
+        id: 19,
+        section: "Part 4: In & At (Parts of the Day)",
+        q: "My family has dinner _______ the evening.",
+        options: ["at", "in", "on"],
+        answer: "in"
+      },
+      {
+        id: 20,
+        section: "Part 4: In & At (Parts of the Day)",
+        q: "The store closes _______ midnight.",
+        options: ["in", "at", "on"],
+        answer: "at"
+      }
+    ];
+
+    let tiempoRestante = DURACION_SEGUNDOS;
+    let salidasDetectadas = 0;
+    let examenActivo = false;
+    let yaEnviado = false;
+    let timerInterval = null;
+    let preguntasMezcladas = [];
+
+    const startScreen = document.getElementById("startScreen");
+    const quizForm = document.getElementById("quizForm");
+    const resultBox = document.getElementById("resultBox");
+    const questionsContainer = document.getElementById("questionsContainer");
+    const timerDisplay = document.getElementById("timerDisplay");
+    const warningsDisplay = document.getElementById("warningsDisplay");
+    const warningBanner = document.getElementById("warningBanner");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function mezclarArray(arr) {
+      const copia = [...arr];
+      for (let i = copia.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copia[i], copia[j]] = [copia[j], copia[i]];
+      }
+      return copia;
+    }
+
+    function renderPreguntas() {
+      preguntasMezcladas = mezclarArray(QUESTIONS);
+      questionsContainer.innerHTML = "";
+
+      preguntasMezcladas.forEach((item, index) => {
+        const opcionesMezcladas = mezclarArray(item.options);
+        const card = document.createElement("div");
+        card.className = "question-card";
+
+        const optionsHtml = opcionesMezcladas.map((opt) => `
+          <label class="option">
+            <input type="radio" name="q_${item.id}" value="${opt.replace(/"/g, "&quot;")}" />
+            <span>${opt}</span>
+          </label>
+        `).join("");
+
+        card.innerHTML = `
+          <div class="q-meta">${item.section} · 1 pt</div>
+          <div class="q-text">${index + 1}. ${item.q}</div>
+          ${optionsHtml}
+        `;
+        questionsContainer.appendChild(card);
+      });
+    }
+
+    function actualizarReloj() {
+      const mins = Math.floor(tiempoRestante / 60);
+      const secs = tiempoRestante % 60;
+      timerDisplay.textContent = `Tiempo restante: ${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+
+      if (tiempoRestante <= 0) {
+        clearInterval(timerInterval);
+        finalizarExamen("Tiempo agotado: envío automático.");
+      }
+      tiempoRestante--;
+    }
+
+    function registrarSalida(motivo) {
+      if (!examenActivo || yaEnviado) return;
+      salidasDetectadas++;
+      warningsDisplay.textContent = `Salidas de pantalla: ${salidasDetectadas} / ${MAX_SALIDAS}`;
+
+      warningBanner.style.display = "block";
+      warningBanner.textContent = `Alerta (${salidasDetectadas}/${MAX_SALIDAS}): Se detectó ${motivo}. No salgas del examen.`;
+
+      if (salidasDetectadas >= MAX_SALIDAS) {
+        finalizarExamen("Límite de salidas de pantalla alcanzado: envío automático.");
+      }
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) registrarSalida("cambio de pestaña o minimización");
+    });
+
+    window.addEventListener("blur", () => {
+      if (!document.hidden) registrarSalida("pérdida de enfoque de ventana");
+    });
+
+    function calcularPuntaje() {
+      let score = 0;
+      QUESTIONS.forEach((item) => {
+        const seleccionada = document.querySelector(`input[name="q_${item.id}"]:checked`);
+        if (seleccionada && seleccionada.value === item.answer) {
+          score += 1;
+        }
+      });
+      return score;
+    }
+
+    async function finalizarExamen(motivoCierre) {
+      if (yaEnviado) return;
+      yaEnviado = true;
+      examenActivo = false;
+      clearInterval(timerInterval);
+      submitBtn.disabled = true;
+
+      const nombre = document.getElementById("studentName").value.trim();
+      const grupo = document.getElementById("studentGroup").value.trim();
+      const puntaje = calcularPuntaje();
+
+      const payload = {
+        timestamp: new Date().toISOString(),
+        nombre,
+        grupo,
+        puntaje,
+        total: QUESTIONS.length,
+        salidas: salidasDetectadas,
+        motivoCierre
+      };
+
+      quizForm.classList.add("hidden");
+      resultBox.style.display = "block";
+      document.getElementById("statusMessage").textContent = "Enviando tus respuestas al registro del docente...";
+
+      if (GOOGLE_SCRIPT_URL.startsWith("http")) {
+        try {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          document.getElementById("statusMessage").textContent =
+            `Listo, ${nombre}. Tu examen (${motivoCierre}) fue enviado correctamente. La calificación será entregada por el docente.`;
+        } catch (err) {
+          document.getElementById("statusMessage").textContent =
+            "Hubo un problema de conexión al enviar. Por favor avisa al docente antes de cerrar esta ventana.";
+        }
+      } else {
+        document.getElementById("statusMessage").textContent =
+          `Vista previa local completada (${puntaje}/${QUESTIONS.length} pts en consola, salidas: ${salidasDetectadas}). Configura GOOGLE_SCRIPT_URL para guardar en Google Sheets.`;
+        console.log("Datos del examen:", payload);
+      }
+    }
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      const nombre = document.getElementById("studentName").value.trim();
+      const grupo = document.getElementById("studentGroup").value.trim();
+      if (!nombre || !grupo) {
+        alert("Por favor escribe tu nombre completo y tu grupo antes de iniciar.");
+        return;
+      }
+
+      startScreen.classList.add("hidden");
+      quizForm.classList.remove("hidden");
+      renderPreguntas();
+      examenActivo = true;
+      actualizarReloj();
+      timerInterval = setInterval(actualizarReloj, 1000);
+    });
+
+    quizForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      finalizarExamen("Envío voluntario del estudiante.");
+    });
+  </script>
+</body>
+</html>
